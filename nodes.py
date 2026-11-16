@@ -314,6 +314,8 @@ class AET_PresetSaver:
                 "save_exif": ("BOOLEAN", {"default": False, "tooltip": "Save EXIF tags from the reference image into the preset. Debug always shows the EXIF first, so you can decide."}),
                 "save_profile": ("BOOLEAN", {"default": False, "tooltip": "Save pixel profile (not implemented yet)."}),
                 "overwrite": ("BOOLEAN", {"default": False, "tooltip": "If False, refuse to overwrite an existing preset file."}),
+                "artist": ("STRING", {"default": "", "tooltip": "Optional. If non-empty, written into EXIF Artist field of the preset. If empty, the reference value is kept."}),
+                "copyright": ("STRING", {"default": "", "tooltip": "Optional. If non-empty, written into EXIF Copyright field of the preset. If empty, the reference value is kept."}),
             }
         }
 
@@ -323,7 +325,7 @@ class AET_PresetSaver:
     CATEGORY = "image/save"
     OUTPUT_NODE = True
 
-    def save(self, ref_file_path, preset_name, save_exif, save_profile, overwrite):
+    def save(self, ref_file_path, preset_name, save_exif, save_profile, overwrite, artist="", copyright=""):
         debug_lines = []
 
         if not ref_file_path or not ref_file_path.strip() or not os.path.exists(ref_file_path):
@@ -353,6 +355,10 @@ class AET_PresetSaver:
 
         if save_exif and exif_serializable is not None:
             preset["exif"] = exif_serializable
+            if artist:
+                preset["exif"]["0th"]["Artist"] = artist
+            if copyright:
+                preset["exif"]["0th"]["Copyright"] = copyright
 
         if save_profile:
             debug_lines.append("Profile saving is not implemented yet. Skipped.")
@@ -465,6 +471,9 @@ class AET_ImageSaver:
                 "quality": ("INT", {"default": 88, "min": 1, "max": 100, "tooltip": "JPEG quality (1-100). Higher = better quality, larger file."}),
                 "subsampling": (["4:4:4", "4:2:2", "4:2:0"], {"default": "4:4:4", "tooltip": "JPEG chroma subsampling. 4:4:4 keeps the most detail (best for film grain)."}),
                 "date_override": ("STRING", {"default": "", "tooltip": "Optional. Format: YYYY:MM:DD HH:MM:SS. If empty, current date/time is used."}),
+                "overwrite_artist_copyright": ("BOOLEAN", {"default": False, "tooltip": "If True, overwrite Artist and Copyright in EXIF with the values below (only if non-empty)."}),
+                "artist": ("STRING", {"default": "", "tooltip": "Optional. Used only if overwrite_artist_copyright is True and this field is non-empty."}),
+                "copyright": ("STRING", {"default": "", "tooltip": "Optional. Used only if overwrite_artist_copyright is True and this field is non-empty."}),
             }
         }
 
@@ -474,7 +483,7 @@ class AET_ImageSaver:
     CATEGORY = "image/save"
     OUTPUT_NODE = True
 
-    def save(self, image, exif_json, filename_prefix, output_subfolder, quality, subsampling, date_override):
+    def save(self, image, exif_json, filename_prefix, output_subfolder, quality, subsampling, date_override, overwrite_artist_copyright=False, artist="", copyright=""):
         if not exif_json or not exif_json.strip():
             raise ValueError("exif_json is required. Refusing to save without EXIF.")
 
@@ -505,6 +514,12 @@ class AET_ImageSaver:
         # Скидаємо Orientation, бо пікселі вже орієнтовані правильно
         if "Orientation" in exif_serializable.get("0th", {}):
             exif_serializable["0th"]["Orientation"] = 1
+
+        if overwrite_artist_copyright:
+            if artist:
+                exif_serializable["0th"]["Artist"] = artist
+            if copyright:
+                exif_serializable["0th"]["Copyright"] = copyright
 
         exif_dict = _json_to_exif_dict(exif_serializable)
 
