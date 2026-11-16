@@ -360,6 +360,11 @@ class AET_PresetSaver:
         except Exception:
             xmp_data = None
 
+        if xmp_data:
+            debug_lines.append(f"XMP: found ({len(str(xmp_data))} bytes)")
+        else:
+            debug_lines.append("XMP: not found")
+
         if not save_exif and not save_profile:
             debug_lines.append("Nothing to save: both save_exif and save_profile are False.")
             return ("\n".join(debug_lines),)
