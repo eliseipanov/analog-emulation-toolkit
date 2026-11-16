@@ -140,8 +140,8 @@ def _apply_sensor_shading(img, strength, rng):
     noise = gaussian_filter(noise, sigma=max(1.0, min(h, w) / 64.0))
     factor = 1.0 - strength * noise
     factor = np.clip(factor, 1.0 - strength, 1.0)
-    for ch in range(c):
-        img[:, :, ch] *= factor
+    factor = np.expand_dims(factor, axis=2)
+    img *= factor
     return img
 
 
@@ -185,8 +185,7 @@ def _apply_offcenter_vignette(img, strength, offset_x, offset_y):
     factor = 1.0 - strength * falloff
     factor = np.clip(factor, 1.0 - strength, 1.0)
     factor = factor[:, :, None]
-    for ch in range(c):
-        img[:, :, ch] *= factor
+    img *= factor
     return img
 
 
