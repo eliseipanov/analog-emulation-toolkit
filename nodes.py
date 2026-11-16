@@ -290,24 +290,26 @@ class AET_PresetLoader:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("exif_json",)
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("exif_json", "xmp")
     FUNCTION = "load"
     CATEGORY = "image/loaders"
 
     def load(self, camera_model):
         if camera_model == "None":
-            return (json.dumps({"error": "No camera preset selected"}),)
+            return (json.dumps({"error": "No camera preset selected"}), "")
 
         preset = _load_camera(camera_model)
         if not preset:
-            return (json.dumps({"error": f"Preset not found: {camera_model}"}),)
+            return (json.dumps({"error": f"Preset not found: {camera_model}"}), "")
+
+        xmp = preset.get("xmp", "")
 
         if "exif" in preset:
-            return (json.dumps(preset["exif"], ensure_ascii=False),)
+            return (json.dumps(preset["exif"], ensure_ascii=False), xmp)
 
         exif_dict = _camera_to_exif(preset)
-        return (_exif_dict_to_json(exif_dict),)
+        return (_exif_dict_to_json(exif_dict), xmp)
 
 
 class AET_PresetSaver:
@@ -349,6 +351,15 @@ class AET_PresetSaver:
         except Exception as e:
             debug_lines.append(f"Error reading EXIF: {e}")
 
+        xmp_data = None
+        try:
+            with Image.open(ref_file_path) as im:
+                xmp_raw = im.getxmp()
+                if xmp_raw:
+                    xmp_data = xmp_raw
+        except Exception:
+            xmp_data = None
+
         if not save_exif and not save_profile:
             debug_lines.append("Nothing to save: both save_exif and save_profile are False.")
             return ("\n".join(debug_lines),)
@@ -365,6 +376,14 @@ class AET_PresetSaver:
                 preset["exif"]["0th"]["Artist"] = artist
             if copyright:
                 preset["exif"]["0th"]["Copyright"] = copyright
+            if xmp_data:
+                if isinstance(xmp_data, str):
+                    preset["xmp"] = xmp_data
+                else:
+                    try:
+                        preset["xmp"] = json.dumps(xmp_data, ensure_ascii=False)
+                    except Exception:
+                        preset["xmp"] = str(xmp_data)
 
         if save_profile:
             debug_lines.append("Profile saving is not implemented yet. Skipped.")
@@ -497,6 +516,7 @@ class AET_ImageSaver:
                 "artist": ("STRING", {"default": "", "tooltip": "Optional. Used only if overwrite_artist_copyright is True and this field is non-empty."}),
                 "copyright": ("STRING", {"default": "", "tooltip": "Optional. Used only if overwrite_artist_copyright is True and this field is non-empty."}),
                 "overwrite_serial": ("BOOLEAN", {"default": False, "tooltip": "If False, do not write any serial numbers. If True, generate random serial numbers similar to the reference (same digit count and format), replacing the reference values."}),
+                "xmp": ("STRING", {"default": "", "tooltip": "Optional. Raw XMP metadata. If empty, no XMP is written to the saved JPEG."}),
             }
         }
 
@@ -506,7 +526,7 @@ class AET_ImageSaver:
     CATEGORY = "image/save"
     OUTPUT_NODE = True
 
-    def save(self, image, exif_json, filename_prefix, output_subfolder, quality, subsampling, date_override, overwrite_artist_copyright=False, artist="", copyright="", overwrite_serial=False):
+    def save(self, image, exif_json, filename_prefix, output_subfolder, quality, subsampling, date_override, overwrite_artist_copyright=False, artist="", copyright="", overwrite_serial=False, xmp=""):
         if not exif_json or not exif_json.strip():
             raise ValueError("exif_json is required. Refusing to save without EXIF.")
 
@@ -590,7 +610,14 @@ class AET_ImageSaver:
             arr = (image[i].cpu().numpy() * 255.0).clip(0, 255).astype(np.uint8)
             img = Image.fromarray(arr, mode="RGB")
             save_path = full_path if i == 0 else full_path.with_name(f"{full_path.stem}_{i+1}.jpg")
-            img.save(save_path, "JPEG", quality=quality, subsampling=subsampling_value, exif=exif_bytes)
+            if xmp:
+                try:
+                    img.save(save_path, "JPEG", quality=quality, subsampling=subsampling_value, exif=exif_bytes, xmp=xmp.encode("utf-8"))
+                except Exception:
+                    print(f"[AET_ImageSaver] Warning: Failed to write XMP metadata, saving without XMP: {save_path}")
+                    img.save(save_path, "JPEG", quality=quality, subsampling=subsampling_value, exif=exif_bytes)
+            else:
+                img.save(save_path, "JPEG", quality=quality, subsampling=subsampling_value, exif=exif_bytes)
 
         return (str(full_path),)
 

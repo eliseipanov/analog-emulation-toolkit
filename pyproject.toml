@@ -3,7 +3,7 @@ name = "analog-emulation-toolkit"
 description = "ComfyUI Post-processing toolkit for analog-style pixel grain, scanner/camera EXIF emulation, and reference preset saving"
 version = "0.1.0"
 license = { file = "LICENSE" }
-dependencies = ["numpy", "scipy", "scikit-image", "piexif"]
+dependencies = ["numpy", "scipy", "scikit-image", "piexif", "pillow>=11.0"]
 
 [project.urls]
 Repository = "https://github.com/eliseipanov/analog-emulation-toolkit"

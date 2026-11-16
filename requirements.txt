@@ -3,4 +3,4 @@ scipy
 piexif
 defusedxml
 scikit-image
-pillow
+pillow>=11.0
