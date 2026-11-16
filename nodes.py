@@ -596,6 +596,77 @@ class AET_ImageSaver:
         except Exception as e:
             raise ValueError(f"Failed to build EXIF bytes: {e}")
 
+        # Synchronize XMP metadata with EXIF date and serial numbers
+        if xmp:
+            try:
+                xmp_obj = json.loads(xmp)
+                xmp_date_iso = (
+                    f"{date_str[0:4]}-{date_str[5:7]}-{date_str[8:10]}"
+                    f"T{date_str[11:13]}:{date_str[14:16]}:{date_str[17:19]}"
+                )
+
+                body_serial = None
+                lens_serial = None
+                if overwrite_serial and "Exif" in exif_serializable:
+                    body_serial = exif_serializable["Exif"].get("BodySerialNumber")
+                    lens_serial = exif_serializable["Exif"].get("LensSerialNumber")
+
+                def _walk_dict(obj):
+                    if isinstance(obj, dict):
+                        for k in list(obj.keys()):
+                            if k in ("CreateDate", "DateCreated"):
+                                obj[k] = xmp_date_iso
+                            elif k == "SerialNumber" and overwrite_serial and body_serial is not None:
+                                obj[k] = body_serial
+                            elif k == "LensSerialNumber" and overwrite_serial and lens_serial is not None:
+                                obj[k] = lens_serial
+                            else:
+                                _walk_dict(obj[k])
+                    elif isinstance(obj, list):
+                        for it in obj:
+                            _walk_dict(it)
+
+                _walk_dict(xmp_obj)
+                xmp = json.dumps(xmp_obj, ensure_ascii=False)
+            except Exception:
+                # Try XML parsing
+                try:
+                    import xml.etree.ElementTree as ET
+                    root = ET.fromstring(xmp)
+                    xmp_date_iso = (
+                        f"{date_str[0:4]}-{date_str[5:7]}-{date_str[8:10]}"
+                        f"T{date_str[11:13]}:{date_str[14:16]}:{date_str[17:19]}"
+                    )
+
+                    body_serial = None
+                    lens_serial = None
+                    if overwrite_serial and "Exif" in exif_serializable:
+                        body_serial = exif_serializable["Exif"].get("BodySerialNumber")
+                        lens_serial = exif_serializable["Exif"].get("LensSerialNumber")
+
+                    def _walk_xml(elem):
+                        for attr in list(elem.attrib):
+                            if attr in ("CreateDate", "DateCreated"):
+                                elem.attrib[attr] = xmp_date_iso
+                            elif attr == "SerialNumber" and overwrite_serial and body_serial is not None:
+                                elem.attrib[attr] = body_serial
+                            elif attr == "LensSerialNumber" and overwrite_serial and lens_serial is not None:
+                                elem.attrib[attr] = lens_serial
+                        for child in elem:
+                            tag = child.tag
+                            if tag.endswith("CreateDate") or tag.endswith("DateCreated"):
+                                child.text = xmp_date_iso
+                            elif tag == "SerialNumber" and overwrite_serial and body_serial is not None:
+                                child.text = body_serial
+                            elif tag == "LensSerialNumber" and overwrite_serial and lens_serial is not None:
+                                child.text = lens_serial
+                            _walk_xml(child)
+
+                    _walk_xml(root)
+                    xmp = ET.tostring(root, encoding="unicode")
+                except Exception as e:
+                    print(f"[AET_ImageSaver] Warning: Failed to synchronize XMP metadata: {e}")
+
         output_dir = Path(folder_paths.get_output_directory()) / output_subfolder
         output_dir.mkdir(parents=True, exist_ok=True)
 
