@@ -466,7 +466,7 @@ class AET_ImageSaver:
             "required": {
                 "image": ("IMAGE",),
                 "exif_json": ("STRING", {"forceInput": True, "tooltip": "Required. JSON with EXIF tags from AET_PixelEmulator or AET_PresetLoader. Saving is refused if empty or invalid."}),
-                "filename_prefix": ("STRING", {"default": "SCAN", "tooltip": "Prefix for the output filename."}),
+                "filename_prefix": ("STRING", {"default": "SCAN", "tooltip": "Prefix for the output filename. Common defaults by brand: SCAN (Epson scanners, 3 digits), IMG_ (Canon, 4 digits), DSC_ (Nikon, 4 digits), DSC (Sony, 5 digits), DSCF (Fujifilm, 4 digits). Digit count varies by brand; see README for details."}),
                 "output_subfolder": ("STRING", {"default": "scans", "tooltip": "Subfolder inside ComfyUI/output/. Nested paths like scans/2026 are allowed."}),
                 "quality": ("INT", {"default": 88, "min": 1, "max": 100, "tooltip": "JPEG quality (1-100). Higher = better quality, larger file."}),
                 "subsampling": (["4:4:4", "4:2:2", "4:2:0"], {"default": "4:4:4", "tooltip": "JPEG chroma subsampling. 4:4:4 keeps the most detail (best for film grain)."}),
