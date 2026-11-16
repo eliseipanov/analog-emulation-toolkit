@@ -521,6 +521,11 @@ class AET_ImageSaver:
             if copyright:
                 exif_serializable["0th"]["Copyright"] = copyright
 
+        if "Exif" not in exif_serializable:
+            exif_serializable["Exif"] = {}
+        exif_serializable["Exif"]["PixelXDimension"] = image.shape[2]
+        exif_serializable["Exif"]["PixelYDimension"] = image.shape[1]
+
         exif_dict = _json_to_exif_dict(exif_serializable)
 
         try:
