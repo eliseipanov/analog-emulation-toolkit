@@ -5,6 +5,8 @@ import piexif
 import folder_paths
 import os
 import json
+import random
+import string
 from datetime import datetime
 from pathlib import Path
 from PIL import Image, ImageOps
@@ -474,6 +476,7 @@ class AET_ImageSaver:
                 "overwrite_artist_copyright": ("BOOLEAN", {"default": False, "tooltip": "If True, overwrite Artist and Copyright in EXIF with the values below (only if non-empty)."}),
                 "artist": ("STRING", {"default": "", "tooltip": "Optional. Used only if overwrite_artist_copyright is True and this field is non-empty."}),
                 "copyright": ("STRING", {"default": "", "tooltip": "Optional. Used only if overwrite_artist_copyright is True and this field is non-empty."}),
+                "overwrite_serial": ("BOOLEAN", {"default": False, "tooltip": "If False, do not write any serial numbers. If True, generate random serial numbers similar to the reference (same digit count and format), replacing the reference values."}),
             }
         }
 
@@ -483,7 +486,7 @@ class AET_ImageSaver:
     CATEGORY = "image/save"
     OUTPUT_NODE = True
 
-    def save(self, image, exif_json, filename_prefix, output_subfolder, quality, subsampling, date_override, overwrite_artist_copyright=False, artist="", copyright=""):
+    def save(self, image, exif_json, filename_prefix, output_subfolder, quality, subsampling, date_override, overwrite_artist_copyright=False, artist="", copyright="", overwrite_serial=False):
         if not exif_json or not exif_json.strip():
             raise ValueError("exif_json is required. Refusing to save without EXIF.")
 
@@ -525,6 +528,19 @@ class AET_ImageSaver:
             exif_serializable["Exif"] = {}
         exif_serializable["Exif"]["PixelXDimension"] = image.shape[2]
         exif_serializable["Exif"]["PixelYDimension"] = image.shape[1]
+
+        if overwrite_serial:
+            for tag_name in ("BodySerialNumber", "LensSerialNumber"):
+                if tag_name in exif_serializable["Exif"]:
+                    original = str(exif_serializable["Exif"][tag_name])
+                    generated = "".join(
+                        random.choice(string.digits) if ch.isdigit() else random.choice(string.ascii_letters)
+                        for ch in original
+                    )
+                    exif_serializable["Exif"][tag_name] = generated
+        else:
+            exif_serializable["Exif"].pop("BodySerialNumber", None)
+            exif_serializable["Exif"].pop("LensSerialNumber", None)
 
         exif_dict = _json_to_exif_dict(exif_serializable)
 
