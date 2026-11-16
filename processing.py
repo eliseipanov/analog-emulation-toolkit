@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from scipy.ndimage import gaussian_filter
 from skimage.color import rgb2lab, lab2rgb
 
 
@@ -74,8 +75,79 @@ def _lab_chroma_shift(img, strength, rng):
     return np.clip(lab2rgb(lab), 0.0, 1.0)
 
 
+def _apply_hot_pixels(img, count, rng):
+    h, w, c = img.shape
+    if count <= 0:
+        return img
+    ys = rng.integers(0, h, count)
+    xs = rng.integers(0, w, count)
+    for y, x in zip(ys, xs):
+        img[y, x] = 1.0
+    return img
+
+
+def _apply_dead_pixels(img, count, rng):
+    h, w, c = img.shape
+    if count <= 0:
+        return img
+    ys = rng.integers(0, h, count)
+    xs = rng.integers(0, w, count)
+    for y, x in zip(ys, xs):
+        img[y, x] = 0.0
+    return img
+
+
+def _apply_dust_spots(img, count, rng):
+    h, w, c = img.shape
+    if count <= 0:
+        return img
+    mask = np.zeros((h, w), dtype=np.float32)
+    for _ in range(count):
+        cy = rng.integers(0, h)
+        cx = rng.integers(0, w)
+        radius = rng.uniform(2.0, 10.0)
+        y, x = np.ogrid[:h, :w]
+        dist = np.sqrt((x - cx) ** 2 + (y - cy) ** 2)
+        spot = np.clip(1.0 - dist / radius, 0.0, 1.0)
+        spot = gaussian_filter(spot, sigma=max(0.5, radius / 2.0))
+        intensity = rng.uniform(0.15, 0.35)
+        mask = np.maximum(mask, spot * intensity)
+    mask = gaussian_filter(mask, sigma=2.0)
+    mask = np.clip(mask, 0.0, 1.0)
+    for ch in range(c):
+        img[:, :, ch] *= (1.0 - mask)
+    return img
+
+
+def _apply_sensor_shading(img, strength, rng):
+    h, w, c = img.shape
+    if strength <= 0:
+        return img
+    small_h = max(2, h // 16)
+    small_w = max(2, w // 16)
+    noise = rng.normal(0.0, 1.0, (small_h, small_w)).astype(np.float32)
+    noise = gaussian_filter(noise, sigma=1.0)
+    nmin = noise.min()
+    nmax = noise.max()
+    if nmax > nmin:
+        noise = (noise - nmin) / (nmax - nmin)
+    else:
+        noise = np.zeros_like(noise)
+    repeat_y = max(1, h // small_h)
+    repeat_x = max(1, w // small_w)
+    noise = np.repeat(np.repeat(noise, repeat_y, axis=0), repeat_x, axis=1)
+    noise = noise[:h, :w]
+    noise = gaussian_filter(noise, sigma=max(1.0, min(h, w) / 64.0))
+    factor = 1.0 - strength * noise
+    factor = np.clip(factor, 1.0 - strength, 1.0)
+    for ch in range(c):
+        img[:, :, ch] *= factor
+    return img
+
+
 def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
-                                row_shift=0.0, lab_chroma_strength=0.0):
+                                row_shift=0.0, lab_chroma_strength=0.0,
+                                hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0):
     rng = np.random.default_rng(seed)
     processed = []
 
@@ -103,6 +175,16 @@ def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
         # 3. LAB-обробка хроматичності
         if lab_chroma_strength > 0:
             out = _lab_chroma_shift(out, lab_chroma_strength, rng)
+
+        # 4. Sensor defects
+        if hot_pixels > 0:
+            out = _apply_hot_pixels(out, hot_pixels, rng)
+        if dead_pixels > 0:
+            out = _apply_dead_pixels(out, dead_pixels, rng)
+        if dust_spots > 0:
+            out = _apply_dust_spots(out, dust_spots, rng)
+        if sensor_shading > 0:
+            out = _apply_sensor_shading(out, sensor_shading, rng)
 
         processed.append(torch.from_numpy(out).float())
 

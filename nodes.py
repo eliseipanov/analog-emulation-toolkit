@@ -398,6 +398,10 @@ class AET_PixelEmulator:
                 "lab_chroma_strength": ("FLOAT", {"default": 10.0, "min": 0.0, "max": 20.0, "step": 0.5, "tooltip": "LAB a/b chroma noise strength. 0 = disabled."}),
                 "enable_pixel_processing": ("BOOLEAN", {"default": True, "tooltip": "If False, pixels are passed through unchanged (EXIF is still generated)."}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFF, "tooltip": "Random seed for grain generation."}),
+                "hot_pixels": ("INT", {"default": 0, "min": 0, "max": 100, "tooltip": "Number of random hot pixels (always bright). 0 = disabled."}),
+                "dead_pixels": ("INT", {"default": 0, "min": 0, "max": 100, "tooltip": "Number of random dead pixels (always dark). 0 = disabled."}),
+                "dust_spots": ("INT", {"default": 0, "min": 0, "max": 50, "tooltip": "Number of soft dust spots on the sensor. 0 = disabled."}),
+                "sensor_shading": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 0.5, "step": 0.01, "tooltip": "Low-frequency brightness gradient across the frame (sensor shading). 0 = disabled."}),
             },
             "optional": {
                 "file_path": ("STRING", {"forceInput": True, "tooltip": "Optional: path to the input image (for EXIF debug). Connect from AET_ImageLoader."}),
@@ -410,7 +414,7 @@ class AET_PixelEmulator:
     FUNCTION = "process"
     CATEGORY = "image/postprocessing"
 
-    def process(self, image, scanner_model, frequency_cutoff, grain_amount, row_shift, lab_chroma_strength, enable_pixel_processing, seed, file_path="", ref_file_path=""):
+    def process(self, image, scanner_model, frequency_cutoff, grain_amount, row_shift, lab_chroma_strength, enable_pixel_processing, seed, hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0, file_path="", ref_file_path=""):
         debug_lines = []
         exif_dict = None
 
@@ -456,7 +460,9 @@ class AET_PixelEmulator:
         if enable_pixel_processing:
             processed_tensor = apply_film_scan_processing(
                 image, frequency_cutoff, grain_amount, seed,
-                row_shift=row_shift, lab_chroma_strength=lab_chroma_strength
+                row_shift=row_shift, lab_chroma_strength=lab_chroma_strength,
+                hot_pixels=hot_pixels, dead_pixels=dead_pixels,
+                dust_spots=dust_spots, sensor_shading=sensor_shading
             )
         else:
             debug_str += "\nPixel processing disabled: passing image through unchanged."
