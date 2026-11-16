@@ -402,6 +402,10 @@ class AET_PixelEmulator:
                 "dead_pixels": ("INT", {"default": 0, "min": 0, "max": 100, "tooltip": "Number of random dead pixels (always dark). 0 = disabled."}),
                 "dust_spots": ("INT", {"default": 0, "min": 0, "max": 50, "tooltip": "Number of soft dust spots on the sensor. 0 = disabled."}),
                 "sensor_shading": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 0.5, "step": 0.01, "tooltip": "Low-frequency brightness gradient across the frame (sensor shading). 0 = disabled."}),
+                "chromatic_aberration": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 2.0, "step": 0.05, "tooltip": "Chromatic aberration strength in pixels at the image edge. 0 = disabled. Real lenses show more CA at wide apertures (low f-number)."}),
+                "vignette_strength": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 0.5, "step": 0.01, "tooltip": "Vignetting strength (darkening at the edges). 0 = disabled."}),
+                "vignette_offset_x": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05, "tooltip": "Horizontal offset of the vignette center (-1 = left edge, 1 = right edge). 0 = centered."}),
+                "vignette_offset_y": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05, "tooltip": "Vertical offset of the vignette center (-1 = top edge, 1 = bottom edge). 0 = centered."}),
             },
             "optional": {
                 "file_path": ("STRING", {"forceInput": True, "tooltip": "Optional: path to the input image (for EXIF debug). Connect from AET_ImageLoader."}),
@@ -414,7 +418,7 @@ class AET_PixelEmulator:
     FUNCTION = "process"
     CATEGORY = "image/postprocessing"
 
-    def process(self, image, scanner_model, frequency_cutoff, grain_amount, row_shift, lab_chroma_strength, enable_pixel_processing, seed, hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0, file_path="", ref_file_path=""):
+    def process(self, image, scanner_model, frequency_cutoff, grain_amount, row_shift, lab_chroma_strength, enable_pixel_processing, seed, hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0, chromatic_aberration=0.0, vignette_strength=0.0, vignette_offset_x=0.0, vignette_offset_y=0.0, file_path="", ref_file_path=""):
         debug_lines = []
         exif_dict = None
 
@@ -462,7 +466,11 @@ class AET_PixelEmulator:
                 image, frequency_cutoff, grain_amount, seed,
                 row_shift=row_shift, lab_chroma_strength=lab_chroma_strength,
                 hot_pixels=hot_pixels, dead_pixels=dead_pixels,
-                dust_spots=dust_spots, sensor_shading=sensor_shading
+                dust_spots=dust_spots, sensor_shading=sensor_shading,
+                chromatic_aberration=chromatic_aberration,
+                vignette_strength=vignette_strength,
+                vignette_offset_x=vignette_offset_x,
+                vignette_offset_y=vignette_offset_y
             )
         else:
             debug_str += "\nPixel processing disabled: passing image through unchanged."

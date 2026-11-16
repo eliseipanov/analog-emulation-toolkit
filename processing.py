@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter, map_coordinates
 from skimage.color import rgb2lab, lab2rgb
 
 
@@ -145,9 +145,56 @@ def _apply_sensor_shading(img, strength, rng):
     return img
 
 
+def _apply_chromatic_aberration(img, strength, rng):
+    h, w, c = img.shape
+    if strength <= 0:
+        return img
+    cy, cx = h / 2.0, w / 2.0
+    max_dist = np.sqrt(cy ** 2 + cx ** 2)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    dist = np.sqrt((yy - cy) ** 2 + (xx - cx) ** 2)
+    shift = strength * dist / max_dist
+    out = np.empty_like(img)
+    # R channel shifts outward, B channel shifts inward (relative to center)
+    for ch, mult in ((0, 1.0), (1, 0.0), (2, -1.0)):
+        if mult == 0.0:
+            out[:, :, ch] = img[:, :, ch]
+            continue
+        sy = mult * shift * (yy - cy) / (dist + 1e-8)
+        sx = mult * shift * (xx - cx) / (dist + 1e-8)
+        coords = np.stack([yy - sy, xx - sx])
+        out[:, :, ch] = map_coordinates(img[:, :, ch], coords, order=1, mode='nearest')
+    return out
+
+
+def _apply_offcenter_vignette(img, strength, offset_x, offset_y):
+    h, w, c = img.shape
+    if strength <= 0:
+        return img
+    cy_norm = 0.5 + offset_y * 0.5
+    cx_norm = 0.5 + offset_x * 0.5
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    ny = yy / max(h - 1, 1)
+    nx = xx / max(w - 1, 1)
+    dist = np.sqrt((ny - cy_norm) ** 2 + (nx - cx_norm) ** 2)
+    max_dist = np.sqrt(max(cy_norm, 1 - cy_norm) ** 2 + max(cx_norm, 1 - cx_norm) ** 2)
+    if max_dist <= 0:
+        return img
+    falloff = dist / max_dist
+    falloff = np.clip(falloff, 0.0, 1.0)
+    factor = 1.0 - strength * falloff
+    factor = np.clip(factor, 1.0 - strength, 1.0)
+    factor = factor[:, :, None]
+    for ch in range(c):
+        img[:, :, ch] *= factor
+    return img
+
+
 def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
                                 row_shift=0.0, lab_chroma_strength=0.0,
-                                hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0):
+                                hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0,
+                                chromatic_aberration=0.0, vignette_strength=0.0,
+                                vignette_offset_x=0.0, vignette_offset_y=0.0):
     rng = np.random.default_rng(seed)
     processed = []
 
@@ -185,6 +232,12 @@ def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
             out = _apply_dust_spots(out, dust_spots, rng)
         if sensor_shading > 0:
             out = _apply_sensor_shading(out, sensor_shading, rng)
+
+        # 5. Optical defects
+        if chromatic_aberration > 0:
+            out = _apply_chromatic_aberration(out, chromatic_aberration, rng)
+        if vignette_strength > 0:
+            out = _apply_offcenter_vignette(out, vignette_strength, vignette_offset_x, vignette_offset_y)
 
         processed.append(torch.from_numpy(out).float())
 
