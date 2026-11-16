@@ -1,0 +1,13 @@
+[project]
+name = "analog-emulation-toolkit"
+description = "Post-processing toolkit for analog-style pixel grain, scanner/camera EXIF emulation, and reference preset saving"
+version = "0.1.0"
+license = { file = "LICENSE" }
+dependencies = ["numpy", "scipy", "scikit-image", "piexif"]
+
+[project.urls]
+Repository = "https://github.com/eliseipanov/analog-emulation-toolkit"
+
+[tool.comfy]
+PublisherId = "eliseipanov"
+DisplayName = "Analog Emulation Toolkit"

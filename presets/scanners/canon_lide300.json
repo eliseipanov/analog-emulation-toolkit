@@ -1,0 +1,10 @@
+{
+  "display_name": "[Flatbed] Canon CanoScan LiDE 300",
+  "make": "Canon",
+  "model": "CanoScan LiDE 300",
+  "software": "IJ Scan Utility",
+  "file_source": null,
+  "exif_mode": "full",
+  "filename_prefix": "IMG",
+  "filename_pattern": "{prefix}_{date}_{counter}"
+}

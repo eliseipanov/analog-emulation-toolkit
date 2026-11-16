@@ -1,0 +1,10 @@
+{
+  "display_name": "[Flatbed] Brother ADS-1700W",
+  "make": "Brother",
+  "model": "ADS-1700W",
+  "software": "ControlCenter",
+  "file_source": null,
+  "exif_mode": "minimal",
+  "filename_prefix": "Scan_",
+  "filename_pattern": "{prefix}{counter}"
+}

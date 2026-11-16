@@ -1,0 +1,9 @@
+{
+  "display_name": "[Film] Epson Perfection V600",
+  "make": "Epson",
+  "model": "Perfection V600",
+  "software": "SilverFast 9.2.6",
+  "file_source": 1,
+  "filename_prefix": "SCAN",
+  "filename_pattern": "{prefix}{date}_{counter}"
+}

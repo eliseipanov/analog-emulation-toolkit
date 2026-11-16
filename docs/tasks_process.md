@@ -1,0 +1,6 @@
+# Tasks Process
+
+| Task | Description | Files Changed | Summary |
+|------|-------------|---------------|---------|
+| Task 1 | Rename node classes and registration keys to AET_ prefix, fix indentation, update JS | nodes.py, web/js/upload_button.js | Renamed 6 node classes (ImageToScannerLoad→AET_ImageLoader, ReferenceScannerImageLoad→AET_ReferenceLoader, CameraExifPresetLoad→AET_PresetLoader, SaveReferencePreset→AET_PresetSaver, FilmScanEmulator→AET_PixelEmulator, SaveExifEmulated→AET_ImageSaver), updated NODE_CLASS_MAPPINGS/NODE_DISPLAY_NAME_MAPPINGS with new display names, updated tooltips referencing old names, fixed print statement to use AET_PixelEmulator, fixed tab indentation to 8 spaces in AET_ImageSaver.save, updated JS node name checks |
+| Task 2 | Fix EXIF round-trip compatibility with piexif | nodes.py | Added base64 import; rewrote _exif_dict_to_json to skip MakerNote/internal tags, encode BYTE/UNDEFINED tags as base64, pass rationals as lists for JSON; rewrote _json_to_exif_dict to restore RATIONAL/SRATIONAL lists to tuples, decode BYTE/UNDEFINED base64 back to bytes, handle ASCII string-to-bytes encoding, skip MakerNote/internal tags |

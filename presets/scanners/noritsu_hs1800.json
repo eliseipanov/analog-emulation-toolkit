@@ -1,0 +1,10 @@
+{
+  "display_name": "[Film] Noritsu HS-1800",
+  "make": "Noritsu",
+  "model": "HS-1800",
+  "software": "Noritsu QSS",
+  "file_source": 1,
+  "exif_mode": "full",
+  "filename_prefix": "SCAN",
+  "filename_pattern": "{prefix}{date}_{counter}"
+}
