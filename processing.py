@@ -193,7 +193,8 @@ def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
                                 row_shift=0.0, lab_chroma_strength=0.0,
                                 hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0,
                                 chromatic_aberration=0.0, vignette_strength=0.0,
-                                vignette_offset_x=0.0, vignette_offset_y=0.0):
+                                vignette_offset_x=0.0, vignette_offset_y=0.0,
+                                is_grayscale=False):
     rng = np.random.default_rng(seed)
     processed = []
 
@@ -219,7 +220,7 @@ def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
             out = _subpixel_row_shift(out, row_shift, rng)
 
         # 3. LAB-обробка хроматичності
-        if lab_chroma_strength > 0:
+        if lab_chroma_strength > 0 and not is_grayscale:
             out = _lab_chroma_shift(out, lab_chroma_strength, rng)
 
         # 4. Sensor defects
@@ -233,7 +234,7 @@ def apply_film_scan_processing(image, frequency_cutoff, grain_amount, seed,
             out = _apply_sensor_shading(out, sensor_shading, rng)
 
         # 5. Optical defects
-        if chromatic_aberration > 0:
+        if chromatic_aberration > 0 and not is_grayscale:
             out = _apply_chromatic_aberration(out, chromatic_aberration, rng)
         if vignette_strength > 0:
             out = _apply_offcenter_vignette(out, vignette_strength, vignette_offset_x, vignette_offset_y)

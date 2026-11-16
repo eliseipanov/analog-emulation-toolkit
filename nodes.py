@@ -406,6 +406,7 @@ class AET_PixelEmulator:
                 "vignette_strength": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 0.5, "step": 0.01, "tooltip": "Vignetting strength (darkening at the edges). 0 = disabled."}),
                 "vignette_offset_x": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05, "tooltip": "Horizontal offset of the vignette center (-1 = left edge, 1 = right edge). 0 = centered."}),
                 "vignette_offset_y": ("FLOAT", {"default": 0.0, "min": -1.0, "max": 1.0, "step": 0.05, "tooltip": "Vertical offset of the vignette center (-1 = top edge, 1 = bottom edge). 0 = centered."}),
+                "is_grayscale": ("BOOLEAN", {"default": False, "tooltip": "Enable this for black-and-white images. Disables LAB chroma noise and chromatic aberration, which do not make sense for grayscale."}),
             },
             "optional": {
                 "file_path": ("STRING", {"forceInput": True, "tooltip": "Optional: path to the input image (for EXIF debug). Connect from AET_ImageLoader."}),
@@ -418,7 +419,7 @@ class AET_PixelEmulator:
     FUNCTION = "process"
     CATEGORY = "image/postprocessing"
 
-    def process(self, image, scanner_model, frequency_cutoff, grain_amount, row_shift, lab_chroma_strength, enable_pixel_processing, seed, hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0, chromatic_aberration=0.0, vignette_strength=0.0, vignette_offset_x=0.0, vignette_offset_y=0.0, file_path="", ref_file_path=""):
+    def process(self, image, scanner_model, frequency_cutoff, grain_amount, row_shift, lab_chroma_strength, enable_pixel_processing, seed, hot_pixels=0, dead_pixels=0, dust_spots=0, sensor_shading=0.0, chromatic_aberration=0.0, vignette_strength=0.0, vignette_offset_x=0.0, vignette_offset_y=0.0, is_grayscale=False, file_path="", ref_file_path=""):
         debug_lines = []
         exif_dict = None
 
@@ -470,7 +471,8 @@ class AET_PixelEmulator:
                 chromatic_aberration=chromatic_aberration,
                 vignette_strength=vignette_strength,
                 vignette_offset_x=vignette_offset_x,
-                vignette_offset_y=vignette_offset_y
+                vignette_offset_y=vignette_offset_y,
+                is_grayscale=is_grayscale
             )
         else:
             debug_str += "\nPixel processing disabled: passing image through unchanged."

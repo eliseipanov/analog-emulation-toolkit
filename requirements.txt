@@ -1,4 +1,6 @@
 numpy
 scipy
 piexif
+defusedxml
 scikit-image
+pillow
