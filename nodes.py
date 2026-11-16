@@ -142,7 +142,9 @@ def _exif_dict_to_json(exif_dict):
             if tag_name in ("ExifTag", "GPSTag", "InteroperabilityTag"):
                 continue
 
-            if tag_type in (1, 7):  # BYTE, UNDEFINED
+            if tag_name == "GPSVersionID":
+                serializable[ifd][tag_name] = list(value)
+            elif tag_type in (1, 7):  # BYTE, UNDEFINED
                 if isinstance(value, bytes):
                     serializable[ifd][tag_name] = base64.b64encode(value).decode("ascii")
                 elif isinstance(value, list) and all(isinstance(v, int) for v in value):
@@ -188,6 +190,8 @@ def _json_to_exif_dict(exif_serializable):
                         exif_dict[ifd][tag_id] = tuple(value)
                 else:
                     exif_dict[ifd][tag_id] = value
+            elif tag_name == "GPSVersionID" and isinstance(value, list):
+                exif_dict[ifd][tag_id] = tuple(value)
             elif tag_type in (1, 7):  # BYTE, UNDEFINED
                 if isinstance(value, str):
                     try:

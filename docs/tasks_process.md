@@ -10,3 +10,4 @@
 | Task 7 | Update filename_prefix tooltip in AET_ImageSaver | nodes.py | Changed filename_prefix tooltip to include brand-specific defaults (SCAN, IMG_, DSC_, DSC, DSCF) with digit counts and README reference |
 | Task 8 | Remove BodySerialNumber and LensSerialNumber from saved EXIF | nodes.py | Removed BodySerialNumber/LensSerialNumber from Exif block in both AET_PresetSaver.save (before writing preset) and AET_ImageSaver.save (before _json_to_exif_dict) |
 | Task 9 | Add serial number control to AET_PresetSaver and AET_ImageSaver | nodes.py | AET_PresetSaver keeps serial numbers in presets (removed deletion code); AET_ImageSaver adds overwrite_serial boolean input with random serial generation preserving digit/letter character classes |
+| Task 10 | Fix GPSVersionID serialization/deserialization | nodes.py | _exif_dict_to_json stores GPSVersionID as list of ints; _json_to_exif_dict converts GPSVersionID list back to tuple of ints |
