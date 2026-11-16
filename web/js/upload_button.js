@@ -37,7 +37,17 @@ if (window.comfyAPI?.app && window.comfyAPI?.api) {
                 // Прев'ю — окремий DOM-елемент, але вже без кнопки
                 const preview = document.createElement("img");
                 preview.style.cssText = "max-width:100%;max-height:180px;object-fit:contain;display:none;border-radius:4px;";
-                this.addDOMWidget("preview", "img", preview, { serialize: false });
+                this.addDOMWidget("preview", "img", preview, {
+                    serialize: false,
+                    setValue: (value) => {
+                        if (value) {
+                            preview.src = `/view?filename=${encodeURIComponent(value)}&type=input&subfolder=`;
+                            preview.style.display = "block";
+                        } else {
+                            preview.style.display = "none";
+                        }
+                    },
+                });
 
                 // Оновлення прев'ю при зміні widget.value
                 const originalCallback = widget.callback;
