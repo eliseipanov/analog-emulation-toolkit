@@ -536,9 +536,11 @@ class AET_ImageSaver:
         if overwrite_serial:
             for tag_name in ("BodySerialNumber", "LensSerialNumber"):
                 if tag_name in exif_serializable["Exif"]:
-                    original = str(exif_serializable["Exif"][tag_name])
+                    original = str(exif_serializable["Exif"][tag_name]).strip()
                     generated = "".join(
-                        random.choice(string.digits) if ch.isdigit() else random.choice(string.ascii_letters)
+                        random.choice(string.digits) if ch.isdigit() else
+                        random.choice(string.ascii_letters) if ch.isalpha() else
+                        ch
                         for ch in original
                     )
                     exif_serializable["Exif"][tag_name] = generated

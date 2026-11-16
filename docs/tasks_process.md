@@ -11,3 +11,4 @@
 | Task 8 | Remove BodySerialNumber and LensSerialNumber from saved EXIF | nodes.py | Removed BodySerialNumber/LensSerialNumber from Exif block in both AET_PresetSaver.save (before writing preset) and AET_ImageSaver.save (before _json_to_exif_dict) |
 | Task 9 | Add serial number control to AET_PresetSaver and AET_ImageSaver | nodes.py | AET_PresetSaver keeps serial numbers in presets (removed deletion code); AET_ImageSaver adds overwrite_serial boolean input with random serial generation preserving digit/letter character classes |
 | Task 10 | Fix GPSVersionID serialization/deserialization | nodes.py | _exif_dict_to_json stores GPSVersionID as list of ints; _json_to_exif_dict converts GPSVersionID list back to tuple of ints |
+| Task 11 | Fix serial number generation to preserve whitespace | nodes.py | Serial generation strips whitespace, preserves digit/letter classes, keeps other characters as-is, no trailing spaces added |
