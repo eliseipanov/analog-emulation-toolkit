@@ -69,6 +69,20 @@ AET Reference Loader → AET Preset Saver (enable save_exif)
 ## Notes
 AET Image Saver always overwrites the date in EXIF with the current date unless date_override is set.
 
+## Filename prefix examples by device
+
+| Device / brand | Common prefix | Example |
+|---|---|---|
+| Epson scanners | `SCAN` | `SCAN20261116_01.jpg` |
+| Noritsu | `SCAN` | `SCAN20261116_01.jpg` |
+| Canon cameras | `IMG_` | `IMG_20261116_01.jpg` |
+| Nikon cameras | `DSC_` | `DSC_20261116_01.jpg` |
+| Fujifilm cameras | `DSCF` | `DSCF20261116_01.jpg` |
+| Sony cameras | `DSC` | `DSC20261116_01.jpg` |
+| Apple iPhone | `IMG_` | `IMG_20261116_01.jpg` |
+| Google Pixel | `PXL_` | `PXL_20261116_01.jpg` |
+| Samsung Galaxy | `SAM_` | `SAM_20261116_01.jpg` |
+
 Orientation is forced to 1 on save, because pixels are already oriented correctly by the loaders.
 
 MakerNote is stripped from presets because it cannot survive JSON round-trip and becomes invalid after any modification.
