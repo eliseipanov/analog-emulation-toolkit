@@ -133,8 +133,8 @@ def _apply_sensor_shading(img, strength, rng):
         noise = (noise - nmin) / (nmax - nmin)
     else:
         noise = np.zeros_like(noise)
-    repeat_y = max(1, h // small_h)
-    repeat_x = max(1, w // small_w)
+    repeat_y = max(1, (h + small_h - 1) // small_h)
+    repeat_x = max(1, (w + small_w - 1) // small_w)
     noise = np.repeat(np.repeat(noise, repeat_y, axis=0), repeat_x, axis=1)
     noise = noise[:h, :w]
     noise = gaussian_filter(noise, sigma=max(1.0, min(h, w) / 64.0))
